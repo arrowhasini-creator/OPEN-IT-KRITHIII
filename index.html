@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>A little choice for you ✨</title>
+  <style>
+    :root{
+      --bg:#fff9f2; --card:#fff; --accent:#ff7aa2; --muted:#6b6b6b;
+      --glass: rgba(255,255,255,0.7);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(160deg,#fff9f2 0%, #fff 40%);
+      color:#222;
+      padding:24px;
+    }
+    .wrap{
+      width:100%; max-width:760px; background:var(--card); border-radius:16px; padding:28px;
+      box-shadow: 0 8px 30px rgba(20,20,40,0.08);
+      text-align:center;
+    }
+    h1{margin:0 0 8px; font-size:1.5rem; letter-spacing:0.2px}
+    p.lead{margin:0 0 18px; color:var(--muted)}
+    .choices{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:18px 0 10px}
+    .choice{
+      background:linear-gradient(180deg, rgba(255,255,255,0.9), var(--glass));
+      border:1px solid rgba(0,0,0,0.06);
+      padding:12px 18px; border-radius:12px; cursor:pointer; transition:transform .15s ease, box-shadow .15s;
+      min-width:140px;
+    }
+    .choice:hover{transform:translateY(-6px); box-shadow:0 12px 30px rgba(20,20,40,0.08)}
+    .choice.selected{background:linear-gradient(90deg,var(--accent), #ffb3d1); color:white; border:none; box-shadow:0 10px 30px rgba(255,122,162,0.18)}
+    #reveal{
+      margin-top:18px; background:linear-gradient(180deg,#fff,#fffefc); padding:16px; border-radius:12px;
+      border:1px solid rgba(0,0,0,0.04); min-height:72px; display:flex; align-items:center; justify-content:center;
+      font-size:1rem; color:#222; transition:all .2s ease;
+    }
+    #reveal.hidden{opacity:0; transform:translateY(8px); height:0; padding:0; border:none}
+    .hint{font-size:0.9rem; color:var(--muted); margin-top:10px}
+    .small{font-size:0.88rem; color:var(--muted)}
+    .btn-row{display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap}
+    .btn{
+      border:1px solid rgba(0,0,0,0.06); background:white; padding:8px 12px; border-radius:10px; cursor:pointer;
+      font-weight:600; font-size:0.95rem;
+    }
+    .btn.ghost{background:transparent}
+    /* confetti pieces */
+    .confetti{position:fixed; left:0; top:0; pointer-events:none; width:100%; height:100%; overflow:hidden;}
+    @media (max-width:480px){
+      .choice{min-width:120px; padding:10px 12px}
+      h1{font-size:1.25rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-labelledby="title">
+    <h1 id="title">Pick one — just for you 💖</h1>
+    <p class="lead">Click any option. A little message will appear when you choose.</p>
+
+    <div class="choices" id="choices">
+      <div class="choice" data-key="1">A cosy cuppa</div>
+      <div class="choice" data-key="2">A sweet treat</div>
+      <div class="choice" data-key="3">A quiet moment</div>
+    </div>
+
+    <div id="reveal" class="hidden" aria-live="polite"></div>
+
+    <div class="btn-row">
+      <button class="btn" id="resetBtn">Try again</button>
+      <button class="btn ghost" id="copyBtn">Copy the message</button>
+    </div>
+
+    <p class="hint small">You can edit the message in the file to add your exact note. Enjoy! ✨</p>
+  </div>
+
+  <div class="confetti" id="confetti"></div>
+
+  <script>
+    // === CONFIG: put your paragraph text here ===
+    const MESSAGES = {
+      1: `Hi! I wanted to say how lucky I feel that someone as kind and warm as you raised the person I love. Your generosity and sense of humour make every conversation brighter. I hope today brings you the cosy comfort you deserve — tea, treats, and a lot of smiles. Happy birthday ❤️`,
+      2: `Hi there — your daughter means the world to me, and a lot of that comes from the wonderful home you helped build. Thank you for being someone I can admire and learn from. Wishing you a day filled with sweet surprises and laughter. Happy birthday! 🎂`,
+      3: `Wishing you a lovely birthday. Even from afar I see the care and strength you give your family. I hope today you get a peaceful moment just for you — to rest, reflect, and feel appreciated. Thank you for everything you do. With warm wishes.`
+    };
+    // === end config ===
+
+    const choices = document.getElementById('choices');
+    const reveal = document.getElementById('reveal');
+    const confettiRoot = document.getElementById('confetti');
+    const resetBtn = document.getElementById('resetBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    function clearSelected() {
+      document.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+    }
+
+    function showMessage(key) {
+      const text = MESSAGES[key] || "Here's a little note, just for you.";
+      reveal.classList.remove('hidden');
+      reveal.innerText = text;
+      startConfetti(700);
+    }
+
+    choices.addEventListener('click', (e) => {
+      const el = e.target.closest('.choice');
+      if (!el) return;
+      const key = el.getAttribute('data-key');
+      clearSelected();
+      el.classList.add('selected');
+      showMessage(key);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      clearSelected();
+      reveal.classList.add('hidden');
+      reveal.innerText = '';
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const text = reveal.innerText;
+      if(!text) return alert('Click an option first to reveal the message.');
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.innerText = 'Copied!';
+        setTimeout(()=> copyBtn.innerText = 'Copy the message', 1600);
+      } catch (err) {
+        alert('Could not copy — you can select the text and copy it manually.');
+      }
+    });
+
+    // Simple confetti: create colored emoji/blocks that fall and fade
+    function startConfetti(duration = 800) {
+      const colors = ['#FF7AA2','#FFD36E','#8EE6C4','#9EC9FF','#D1B3FF'];
+      const pieces = Math.round(window.innerWidth / 40);
+      const fragment = document.createDocumentFragment();
+      for (let i=0;i<pieces;i++){
+        const d = document.createElement('div');
+        const size = 6 + Math.random()*12;
+        d.style.position='absolute';
+        d.style.left = Math.random()*100 + '%';
+        d.style.top = '-10%';
+        d.style.width = size + 'px';
+        d.style.height = size*1.6 + 'px';
+        d.style.background = colors[Math.floor(Math.random()*colors.length)];
+        d.style.opacity = (0.7 + Math.random()*0.3);
+        d.style.borderRadius = (Math.random()>0.7? '50%':'3px');
+        d.style.transform = `rotate(${Math.random()*360}deg)`;
+        d.style.pointerEvents='none';
+        d.style.willChange='transform, top, opacity';
+        confettiRoot.appendChild(d);
+
+        // animate by using CSS transitions
+        const fallDuration = 1200 + Math.random()*1000;
+        requestAnimationFrame(()=> {
+          d.style.transition = `transform ${fallDuration}ms linear, top ${fallDuration}ms linear, opacity 400ms ease ${fallDuration-300}ms`;
+          d.style.top = (90 + Math.random()*20) + '%';
+          d.style.transform = `translateY(0) rotate(${Math.random()*720}deg) translateX(${(Math.random()-0.5)*200}px)`;
+          d.style.opacity = '0';
+        });
+
+        setTimeout(()=> {
+          if (d && d.parentNode) d.parentNode.removeChild(d);
+        }, fallDuration + 600);
+      }
+      // cleanup (in case)
+      setTimeout(()=> {
+        confettiRoot.innerHTML = '';
+      }, duration + 1600);
+    }
+  </script>
+</body>
+</html>
